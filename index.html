@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aprendiendo a programar — Python en vivo</title>
+  <meta name="description" content="Aprendé Python ejecutando código en tu navegador y viendo, paso a paso, qué le pasa a cada variable.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%8D%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="menu-btn" class="btn ghost menu-btn" aria-controls="sidebar" aria-expanded="false">Lecciones</button>
+    <h1 class="brand">Aprendiendo a programar <span>· Python en vivo</span></h1>
+    <span id="status" class="status" data-state="loading" role="status" aria-live="polite">
+      <i class="dot" aria-hidden="true"></i><span id="status-text">Cargando Python…</span>
+    </span>
+    <button id="theme-btn" class="btn ghost" aria-label="Cambiar tema claro/oscuro">Tema</button>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar" aria-label="Lecciones">
+      <div class="progress">
+        <div class="progress-label"><span>Tu progreso</span><span id="progress-text">0 / 0</span></div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+      </div>
+      <nav id="lesson-list"></nav>
+    </aside>
+
+    <main class="workspace">
+      <section class="pane left">
+        <article id="lesson" class="lesson">
+          <header class="lesson-head">
+            <div>
+              <p id="lesson-level" class="eyebrow"></p>
+              <h2 id="lesson-title"></h2>
+            </div>
+            <div class="seg" role="group" aria-label="Qué querés ver en el editor">
+              <button id="mode-example" class="seg-btn" aria-pressed="true">Ejemplo</button>
+              <button id="mode-exercise" class="seg-btn" aria-pressed="false">Ejercicio</button>
+            </div>
+          </header>
+          <div id="lesson-body" class="lesson-body"></div>
+          <div id="exercise-prompt" class="exercise-prompt" hidden></div>
+        </article>
+
+        <section class="editor-pane" aria-label="Editor de código">
+          <div class="toolbar">
+            <button id="run-btn" class="btn primary" title="Ejecutar (Ctrl+Enter)">Ejecutar</button>
+            <button id="trace-btn" class="btn accent" title="Paso a paso (Ctrl+Shift+Enter)">Paso a paso</button>
+            <button id="verify-btn" class="btn success" hidden>Verificar ejercicio</button>
+            <button id="stop-btn" class="btn danger" disabled>Detener</button>
+            <span class="spacer"></span>
+            <button id="reset-btn" class="btn ghost" title="Volver al código original de esta lección">Restaurar</button>
+          </div>
+          <div id="editor" class="editor"></div>
+          <details class="stdin" id="stdin-box">
+            <summary>Entrada para <code>input()</code></summary>
+            <p class="muted small">Una línea por cada <code>input()</code> de tu programa.</p>
+            <textarea id="stdin" rows="2" spellcheck="false" aria-label="Datos de entrada para input()"></textarea>
+          </details>
+        </section>
+      </section>
+
+      <section class="pane right">
+        <div class="tabs" role="tablist">
+          <button id="tab-output" class="tab" role="tab" aria-selected="true" aria-controls="panel-output">Salida</button>
+          <button id="tab-viz" class="tab" role="tab" aria-selected="false" aria-controls="panel-viz">Paso a paso</button>
+        </div>
+
+        <div id="panel-output" class="panel" role="tabpanel" aria-labelledby="tab-output">
+          <p id="output-empty" class="muted placeholder">
+            Apretá <strong>Ejecutar</strong> para ver lo que imprime tu programa.
+          </p>
+          <pre id="output" class="output" aria-live="polite"></pre>
+          <div id="error-box" class="error-box" hidden>
+            <pre id="error-text"></pre>
+            <p id="error-hint" class="hint"></p>
+          </div>
+          <p id="run-meta" class="muted small"></p>
+          <div id="checks" class="checks" hidden></div>
+        </div>
+
+        <div id="panel-viz" class="panel" role="tabpanel" aria-labelledby="tab-viz" hidden>
+          <div id="viz-empty" class="muted placeholder">
+            <p>Apretá <strong>Paso a paso</strong> para ver cómo se ejecuta tu código
+            línea por línea: la línea activa se resalta en el editor y acá ves las
+            variables y la pila de llamadas en cada momento.</p>
+            <div id="viz-error" class="error-box" hidden>
+              <pre id="viz-error-text"></pre>
+              <p id="viz-error-hint" class="hint"></p>
+            </div>
+          </div>
+          <div id="viz-body" hidden>
+            <div class="viz-controls">
+              <button id="viz-first" class="btn ghost" aria-label="Primer paso">«</button>
+              <button id="viz-prev" class="btn ghost" aria-label="Paso anterior">‹</button>
+              <button id="viz-play" class="btn accent">Reproducir</button>
+              <button id="viz-next" class="btn ghost" aria-label="Paso siguiente">›</button>
+              <button id="viz-last" class="btn ghost" aria-label="Último paso">»</button>
+              <label class="speed">Velocidad
+                <select id="viz-speed">
+                  <option value="1800">Lenta</option>
+                  <option value="900" selected>Normal</option>
+                  <option value="350">Rápida</option>
+                </select>
+              </label>
+            </div>
+            <input id="viz-slider" class="slider" type="range" min="0" max="0" value="0" aria-label="Paso actual">
+            <p id="viz-counter" class="muted small counter"></p>
+            <div id="viz-stale" class="notice" hidden>
+              El código cambió desde que se generó este recorrido. Volvé a apretar <strong>Paso a paso</strong>.
+            </div>
+            <div id="viz-message" class="viz-message"></div>
+            <h3 class="section-title">Variables y pila de llamadas</h3>
+            <div id="viz-frames" class="frames"></div>
+            <div id="viz-output-box">
+              <h3 class="section-title">Salida hasta este paso</h3>
+              <pre id="viz-output" class="output small-output"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
